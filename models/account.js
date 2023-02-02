@@ -33,6 +33,26 @@ const account = {
                 callback(null, result);
             }
         });
+    },
+    insertToken: (id, token, callback) => {
+        let sql = "UPDATE accounts SET ? WHERE id = ? ";
+        conn.query(sql, [token, id], (err, result) => {
+            if (err) {
+                callback(err, null);
+            } else {
+                callback(null, result);
+            }
+        });
+    },
+    checkToken: (refreshToken, callback) => {
+        let sql = "SELECT * FROM accounts WHERE refresh_token = ?";
+        conn.query(sql, refreshToken, (err, result) => {
+            if (err) {
+                callback(err, null);
+            } else {
+                callback(null, result);
+            }
+        });
     }
 };
 

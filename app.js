@@ -5,6 +5,8 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const conn = require('./config/database');
+const category_route = require('./routes/category.route');
+const product_route = require('./routes/product.route');
 const account_route = require('./routes/account.route');
 
 const app = express();
@@ -18,8 +20,14 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 
-account_route(app);
+category_route(app);
+product_route(app);
 
-app.listen(process.env.SERVER_PORT, () => {
-    console.log("Server Auth is Listening at http://%s:%s", process.env.SERVER_HOST, process.env.SERVER_PORT);
+const server = app.listen(process.env.APP_PORT, process.env.APP_HOST, () => {
+
+    const host = server.address().address;
+    const port = server.address().port;
+
+    console.log("API App is Listening at http://%s:%s", host, port);
+
 });

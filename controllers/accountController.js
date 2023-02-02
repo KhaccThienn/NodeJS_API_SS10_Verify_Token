@@ -1,7 +1,9 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const account = require('../models/account');
+const generateToken = require('../helpers/generateToken');
 const saltRounds = 10;
+
 
 const accountController = {
     getAll: (req, res) => {
@@ -38,8 +40,15 @@ const accountController = {
                             res.json(err);
                         } else {
                             if (result) {
-                                const token = jwt.sign({ id: data[0].id }, process.env.SECRET_TOKEN, {expiresIn: "1m"});
-                                res.json({ result, token });
+                                // const token = jwt.sign({ id: data[0].id }, process.env.SECRET_TOKEN, {expiresIn: "1m"});
+                                const token = generateToken({id: data[0].id});
+                                account.insertToken( data[0].id , {refresh_token: token.refreshToken}, (err, tokenData) =>{
+                                    if (err) {
+                                        res.json(err);
+                                    } else {    
+                                        res.status(200).json({tokenData, token});
+                                    }
+                                })
                             } else {
                                 res.json({ result, message: "Failed" });
                             }
@@ -48,6 +57,33 @@ const accountController = {
                 }
             }
         })
+    },
+    refreshToken:(req, res) =>{
+        const refreshToken = req.body.refreshToken;
+        if (!refreshToken){
+            return res.status(401).json({message: "Refresh token is required"});
+        } else {
+            account.checkToken(refreshToken, (err, data) => {
+                if (err) {
+                    res.json(err);
+                } else {
+                    try {
+                        var decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN);
+                        console.log(decoded);
+                        const token = generateToken({id: decoded.id});
+                        account.insertToken( decoded.id , {refresh_token: token.refreshToken}, (err, tokenData) =>{
+                            if (err) {
+                                res.json(err);
+                            } else {    
+                                res.status(200).json({tokenData, token});
+                            }
+                        })
+                    } catch(err) {
+                        res.status(403).json({ message: err });
+                    }
+                }
+            });
+        }
     }
 };
 
